@@ -15,6 +15,9 @@ class TravisSimulator(object):
     logStrPrefix = '***'
     yamlFileLocation = '.travis.yml'
 
+    def __init__(self, args):
+        self.args = args
+
     def parseTestCommands(self):
         yamlData = utils.getYamlDocument(self.yamlFileLocation)
         return yamlData['script']
@@ -22,6 +25,8 @@ class TravisSimulator(object):
     def runTests(self):
         testCommands = self.parseTestCommands()
         for command in testCommands:
+            if self.args.python is not None and command[0:6] == 'python':
+                command = self.args.python + command[6:]
             self.log('Running: "{}"'.format(command))
             utils.runCommand(command)
         self.log('SUCCESS')
@@ -36,7 +41,10 @@ def run_tests_main():
         ga4gh.common.__version__)
     parser.add_argument(
         "--version", version=versionString, action="version")
-    parser.parse_args()
+    parser.add_argument(
+        "-p", "--python",
+        help="path of the python executable to use", default=None)
+    args = parser.parse_args()
 
-    travisSimulator = TravisSimulator()
+    travisSimulator = TravisSimulator(args)
     travisSimulator.runTests()
